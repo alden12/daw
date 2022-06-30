@@ -1,4 +1,4 @@
-import RxFM from 'rxfm';
+import RxFM, { addToView } from 'rxfm';
 import { css } from '@emotion/css';
 import { Daw } from './Daw';
 
@@ -16,4 +16,5 @@ const App = () => <div id="app">
   <Daw />
 </div>;
 
-App().subscribe(element => document.body.appendChild(element));
+// App().subscribe(element => document.body.appendChild(element));
+addToView(<App />, document.body);

@@ -21,7 +21,7 @@ interface RangeInputProps {
 export const RangeInput = ({ label, setValue, value, min = 0, max = 100, step = 1 }: RangeInputProps) => {
   return <div class={rangeInputStyle}>
     <span >{label}</span>
-    <input type="range" min={min} max={max} step={step} value={value} onChange={event => setValue(Number(event.target.value))} />
+    <input type="range" min={min} max={max} step={step} value={value} onInput={event => setValue(Number(event.target.value))} />
     <span>{value}</span>
   </div>;
 };

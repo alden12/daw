@@ -1,10 +1,8 @@
 import RxFM, { conditional } from 'rxfm';
-import { BehaviorSubject } from 'rxjs';
 import { css } from '@emotion/css';
-import { Oscillator } from './Oscillator';
-
-const audioContextSubject = new BehaviorSubject<AudioContext | undefined>(undefined);
-export const audioContext = audioContextSubject.asObservable();
+import { MidiKeyboard, midiKeyboardHandlers } from './MidiKeyboard';
+import { PolyphonicSynthesizer } from './PolyphonicSynthesizer';
+import { audioContext, audioContextSubject } from './audio-context';
 
 const dawStyles = css`
   display: grid;
@@ -25,10 +23,11 @@ export const Daw = () => {
     audioContextSubject.next(undefined);
   };
 
-  return <div class={dawStyles}>
-    <button onClick={conditional(audioContext, destroy, init)}>
-      {conditional(audioContext, "Stop", "Start")}
+  return <div class={dawStyles} {...midiKeyboardHandlers}>
+    <button onClick={conditional(audioContextSubject, destroy, init)}>
+      {conditional(audioContextSubject, "Stop", "Start")}
     </button>
-    {conditional(audioContext, <Oscillator />)}
+    {conditional(audioContextSubject, <PolyphonicSynthesizer />)}
+    <MidiKeyboard />
   </div>;
 };

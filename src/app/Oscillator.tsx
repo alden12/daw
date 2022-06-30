@@ -1,38 +1,27 @@
-import RxFM, { selectFrom } from 'rxfm';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { combineLatestWith, filter, map, mapTo, tap } from 'rxjs/operators';
-import { audioContext } from './Daw';
-import { RangeInput } from './RangeInput';
+import { combineLatest, Observable } from 'rxjs';
+import { map, mapTo, tap } from 'rxjs/operators';
+import { createOscillatorNode } from './audio-context';
+import { finalizeWithValue, midiToFrequency } from './utils';
 
-const midiToFrequency = (midiNote: number) => Math.pow(2, (midiNote - 69) / 12) * 440;
-
-interface OscillatorProps {
+export interface OscillatorProps {
   midiNote: number;
+  type: OscillatorType;
+  gain?: number;
 }
 
-const oscillator = (props: Observable<OscillatorProps>) => audioContext.pipe(
-  filter(Boolean),
-  map((audioContext) => {
-    const oscillatorNode = audioContext.createOscillator();
-    oscillatorNode.connect(audioContext.destination);
-    oscillatorNode.start(0);
+export const oscillator = (props: Observable<OscillatorProps>) => combineLatest([
+  createOscillatorNode(),
+  props,
+]).pipe(
+  map(([oscillatorNode, { midiNote, type }]) => {
+    oscillatorNode.frequency.value = midiToFrequency(midiNote);
+    oscillatorNode.type = type;
     return oscillatorNode;
   }),
-  combineLatestWith(props),
-  tap(([oscillatorNode, { midiNote }]) => oscillatorNode.frequency.value = midiToFrequency(midiNote)),
-  mapTo(null),
+  tap(oscillatorNode => oscillatorNode.start(0)),
+  finalizeWithValue(oscillatorNode => oscillatorNode.stop()),
 );
 
-interface OscillatorProps {
-  midiNote: number;
-}
-
-export const Oscillator = () => {
-  const props = new BehaviorSubject<OscillatorProps>({ midiNote: 60 });
-  const setProp = <K extends keyof OscillatorProps>(key: K) => (value: OscillatorProps[K]) => props.next({ ...props.value, [key]: value });
-
-  return <div>
-    <RangeInput label="MIDI Note" setValue={setProp("midiNote")} value={selectFrom(props, "midiNote")} min={30} max={80} />
-    {oscillator(props)}
-  </div>;
-};
+export const Oscillator = ({ oscillatorProps }: { oscillatorProps: Observable<OscillatorProps> }) => oscillator(oscillatorProps).pipe(
+  mapTo(null),
+);
