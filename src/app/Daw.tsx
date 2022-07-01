@@ -1,7 +1,7 @@
 import RxFM, { conditional } from 'rxfm';
 import { css } from '@emotion/css';
-import { MidiKeyboard, midiKeyboardHandlers } from './MidiKeyboard';
-import { PolyphonicSynthesizer } from './PolyphonicSynthesizer';
+import { MidiKeyboard, midiKeyboardHandlers, pressedKeys } from './MidiKeyboard';
+import { Synthesizer } from './Synthesizer';
 import { audioContext, audioContextSubject } from './audio-context';
 
 const dawStyles = css`
@@ -27,7 +27,7 @@ export const Daw = () => {
     <button onClick={conditional(audioContextSubject, destroy, init)}>
       {conditional(audioContextSubject, "Stop", "Start")}
     </button>
-    {conditional(audioContextSubject, <PolyphonicSynthesizer />)}
+    {conditional(audioContextSubject, <Synthesizer input={pressedKeys} output={audioContext} />)}
     <MidiKeyboard />
   </div>;
 };

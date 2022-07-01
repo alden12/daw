@@ -1,23 +1,12 @@
 import { css } from "@emotion/css";
 import RxFM, { mapToComponents } from "rxfm";
 import { BehaviorSubject, Observable } from "rxjs";
-import { map, pairwise, shareReplay, startWith } from "rxjs/operators";
+import { map } from "rxjs/operators";
 import { midiToNote } from "./utils";
 
 const pressedKeysSet = new Set<number>();
 const pressedKeysSubject = new BehaviorSubject<number[]>([]);
 export const pressedKeys = pressedKeysSubject.asObservable();
-
-export const pressedKeysDiff = pressedKeys.pipe(
-  startWith<number[]>([]),
-  pairwise(),
-  map(([previousKeys, currentKeys]) => {
-    const added = currentKeys.filter(x => !previousKeys.includes(x));
-    const removed = previousKeys.filter(x => !currentKeys.includes(x));
-    return { added, removed };
-  }),
-  shareReplay({ bufferSize: 1, refCount: true }),
-);
 
 const KEYCODE_MIDI_MAP = {
   KeyQ: 56,
@@ -58,8 +47,10 @@ export const midiKeyboardHandlers = {
     pressedKeysSet.delete(midiNote);
     pressedKeysSubject.next(Array.from(pressedKeysSet.values()));
   },
+  // event: FocusEvent, host: ElementType
   onFocusOut: () => {
     if (!pressedKeysSet.size) return;
+    // if (event.target instanceof HTMLElement && host !== event.target && host.contains(event.target)) return;
     pressedKeysSet.clear();
     pressedKeysSubject.next([]);
   },

@@ -1,6 +1,6 @@
-import { coerceToObservable } from "rxfm";
-import { Observable, defer, OperatorFunction } from "rxjs";
-import { tap, finalize, switchMap } from "rxjs/operators";
+import { coerceToObservable, flatten } from "rxfm";
+import { Observable, defer, OperatorFunction, combineLatest } from "rxjs";
+import { tap, finalize, map, pairwise, shareReplay, startWith, distinctUntilChanged, mapTo } from "rxjs/operators";
 
 export const midiToFrequency = (midiNote: number) => Math.pow(2, (midiNote - 69) / 12) * 440;
 
@@ -31,12 +31,30 @@ export const finalizeWithValue = <T>(callback: (value: T) => void) => {
   });
 };
 
-export const connectNode = <T extends AudioNode, U extends AudioNode | AudioContext>(
-  connectTo: U | Observable<U>,
-): OperatorFunction<T, U> => source => source.pipe(
-  switchMap(
-    (source: T) => coerceToObservable(connectTo).pipe(
-      tap(connectTo =>source.connect( connectTo instanceof AudioContext ? connectTo.destination : connectTo)),
-    ),
-  )
+export type AudioOutput = AudioNode | AudioContext;
+
+export const connectTo = <T extends AudioNode, U extends AudioOutput>(
+  output: U | Observable<U>,
+): OperatorFunction<T, U> => input => combineLatest([input, coerceToObservable(output)]).pipe(
+  map(([input, output]) => {
+    input.connect(output instanceof AudioContext ? output.destination : output);
+    return output;
+  }),
+  distinctUntilChanged(),
 );
+
+export const diff = () => <T>(source: Observable<T[]>) => source.pipe(
+  startWith<T[]>([]),
+  pairwise(),
+  map(([previous, current]) => {
+    const added = current.filter(x => !previous.includes(x));
+    const removed = previous.filter(x => !current.includes(x));
+    return { added, removed };
+  }),
+  shareReplay({ bufferSize: 1, refCount: true }),
+);
+
+export const octavate = (notes: number[], ...offsets: number[]) =>
+  flatten([notes, ...offsets.map(offset => notes.map(note => note + offset * 12))]);
+
+export const mapToNull = (source: Observable<any>) => source.pipe(mapTo(null));
