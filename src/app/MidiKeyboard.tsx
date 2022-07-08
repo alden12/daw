@@ -1,12 +1,15 @@
 import { css } from "@emotion/css";
 import RxFM, { mapToComponents } from "rxfm";
-import { BehaviorSubject, Observable } from "rxjs";
+import { Observable, Subject } from "rxjs";
 import { map } from "rxjs/operators";
-import { midiToNote } from "./utils";
+import { midiToNote, NoteEvent } from "./utils";
 
-const pressedKeysSet = new Set<number>();
-const pressedKeysSubject = new BehaviorSubject<number[]>([]);
-export const pressedKeys = pressedKeysSubject.asObservable();
+const pressedNoteSet = new Set<number>();
+
+const noteEventsSubject = new Subject<NoteEvent>();
+export const noteEvents = noteEventsSubject.asObservable();
+
+const DEFAULT_VELOCITY = 1;
 
 const KEYCODE_MIDI_MAP = {
   KeyQ: 56,
@@ -35,24 +38,24 @@ export const midiKeyboardHandlers = {
     const code = event.code;
     if (!isValidKey(code)) return;
     const midiNote = KEYCODE_MIDI_MAP[code];
-    if (pressedKeysSet.has(midiNote)) return;
-    pressedKeysSet.add(midiNote);
-    pressedKeysSubject.next(Array.from(pressedKeysSet.values()));
+    if (pressedNoteSet.has(midiNote)) return;
+    pressedNoteSet.add(midiNote);
+    noteEventsSubject.next({ type: "noteOn", midiNote, velocity: DEFAULT_VELOCITY });
   },
   onKeyUp: (event: KeyboardEvent) => {
     const code = event.code;
     if (!isValidKey(code)) return;
     const midiNote = KEYCODE_MIDI_MAP[code];
-    if (!pressedKeysSet.has(midiNote)) return;
-    pressedKeysSet.delete(midiNote);
-    pressedKeysSubject.next(Array.from(pressedKeysSet.values()));
+    if (!pressedNoteSet.has(midiNote)) return;
+    pressedNoteSet.delete(midiNote);
+    noteEventsSubject.next({ type: "noteOff", midiNote });
   },
   // event: FocusEvent, host: ElementType
   onFocusOut: () => {
-    if (!pressedKeysSet.size) return;
+    if (!pressedNoteSet.size) return;
     // if (event.target instanceof HTMLElement && host !== event.target && host.contains(event.target)) return;
-    pressedKeysSet.clear();
-    pressedKeysSubject.next([]);
+    pressedNoteSet.clear();
+    [...pressedNoteSet.values()].forEach(midiNote => noteEventsSubject.next({ type: "noteOff", midiNote }));
   },
   tabindex: "0",
 };
@@ -68,7 +71,8 @@ const midiKeyboardStyles = css`
 `;
 
 export const MidiKeyboard = () => <div class={midiKeyboardStyles}>
-  {pressedKeys.pipe(
+  {noteEventsSubject.pipe(
+    map(() => [...pressedNoteSet.values()]),
     mapToComponents(midiNote => <MidiKey midiNote={midiNote} />, midiNote => midiNote)
   )}
 </div>;
