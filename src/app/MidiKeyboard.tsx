@@ -7,7 +7,7 @@ import { midiToNote, NoteEvent } from "./utils";
 const pressedNoteSet = new Set<number>();
 
 const noteEventsSubject = new Subject<NoteEvent>();
-export const noteEvents = noteEventsSubject.asObservable();
+export const midiKeyboardNoteEvents = noteEventsSubject.asObservable();
 
 const DEFAULT_VELOCITY = 1;
 

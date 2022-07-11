@@ -1,6 +1,6 @@
 import RxFM, { conditional } from 'rxfm';
 import { css } from '@emotion/css';
-import { MidiKeyboard, midiKeyboardHandlers, noteEvents } from './MidiKeyboard';
+import { MidiKeyboard, midiKeyboardHandlers, midiKeyboardNoteEvents } from './MidiKeyboard';
 import { Synthesizer } from './Synthesizer';
 import { audioContext, audioContextSubject } from './audio-context';
 import { from, merge } from 'rxjs';
@@ -19,8 +19,10 @@ const noteSequence = from([
   noteOn({ midiNote: 62, startTime: 3 }),
   noteOff({ midiNote: 62, stopTime: 4 }),
 ]).pipe(
-  delay(100),
+  delay(0),
 );
+
+const noteEvents = merge(noteSequence, midiKeyboardNoteEvents);
 
 export const Daw = () => {
   const init = () => {
@@ -37,7 +39,7 @@ export const Daw = () => {
     <button onClick={conditional(audioContextSubject, destroy, init)}>
       {conditional(audioContextSubject, "Stop", "Start")}
     </button>
-    {conditional(audioContextSubject, <Synthesizer noteEvents={merge(noteSequence, noteEvents)} output={audioContext} />)}
+    {conditional(audioContextSubject, <Synthesizer noteEvents={noteEvents} output={audioContext} />)}
     <MidiKeyboard />
   </div>;
 };

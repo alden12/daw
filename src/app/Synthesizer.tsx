@@ -18,8 +18,8 @@ const octavationOptions = [-2, -1, 0, 1, 2];
 
 export const SynthesizerVoice: FC<SynthesizerProps> = ({ noteEvents, output }) => {
   const gainAmount = new BehaviorSubject<number>(0.15);
-  const oscillatorType = new BehaviorSubject<OscillatorType>("sawtooth");
-  const octavation = new BehaviorSubject<number>(1);
+  const oscillatorType = new BehaviorSubject<OscillatorType>("triangle");
+  const octavation = new BehaviorSubject<number>(0);
 
   const octavatedNoteEvents = combineLatest([noteEvents, octavation]).pipe(
     mergeMap(([noteEvent, octave]) => octave ?

@@ -12,12 +12,8 @@ export const midiToNote = (midiNote: number) => {
   return `${NOTE_ORDER[noteIndex]}${noteOctave}`;
 };
 
-export const chainNodes = <T extends [...AudioNode[], AudioContext | AudioNode]>(...nodes: T) => {
-  nodes.reduceRight((nextNode, node) => {
-    if (nextNode instanceof AudioContext) (node as AudioNode).connect(nextNode.destination);
-    else (node as AudioNode).connect(nextNode);
-    return node;
-  });
+export const chainNodes = <T extends AudioNode[]>(nodes: T) => {
+  nodes.reduce((node, nextNode) => node.connect(nextNode));
   return nodes;
 };
 
@@ -36,10 +32,11 @@ export type AudioOutput = AudioNode | AudioContext;
 export const connectTo = <T extends AudioNode, U extends AudioOutput>(
   output: U | Observable<U>,
 ): OperatorFunction<T, U> => input => combineLatest([input, coerceToObservable(output)]).pipe(
-  map(([input, output]) => {
+  tap(([input, output]) => {
     input.connect(output instanceof AudioContext ? output.destination : output);
     return output;
   }),
+  map(([, output]) => output),
   distinctUntilChanged(),
 );
 
@@ -63,11 +60,6 @@ export const NULL = of(null);
 
 // Events:
 
-// export enum EventType {
-//   NOTE_ON = "noteOn",
-//   NOTE_OFF = "noteOff",
-// }
-
 export interface Event<T extends string> {
   type: T;
 }
@@ -83,26 +75,11 @@ export interface NoteOff extends Event<"noteOff"> {
   stopTime?: number;
 }
 
-// export interface ScheduledNote extends NoteOn<"noteOnOff"> {
-//   startTime: number;
-//   duration: number;
-// }
-
 export type NoteEvent = NoteOn | NoteOff;
 
 type NoteEventOfType<T extends NoteEvent["type"]> = Extract<NoteEvent, { type: T }>;
 
-// export const isScheduledNote = (note: Note): note is ScheduledNote => "duration" in note;
-
-// export isIfType = <E extends EvenT extends NoteEvent["type"]>(eventType: T) => <E extends NoteEvent>(({ type }: NoteEvent):  => type === eventType)
-
-// export const isOfType = <T extends NoteEvent>(type: T["type"]) => (event: NoteEvent): event is T => event.type === type;
-
-// export const isOfType = <T extends NoteEvent, E extends EventType>(type: T["type"]) => filter((event: NoteEvent): event is T => event.type === type);
-
 export const isOfType = <T extends NoteEvent["type"], E extends NoteEventOfType<T>>(type: T) => filter((event: NoteEvent): event is E => event.type === type);
-
-// export const isOfType = <E extends NoteEvent, T extends E["type"]>(type: T) => filter((event: NoteEvent): event is E => event.type === type);
 
 export const noteEvent = <T extends NoteEvent["type"], E extends NoteEventOfType<T>>(type: T) => (payload: Omit<E, "type">) => ({ type, ...payload } as E);
 
