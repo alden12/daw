@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import RxFM, { equals, FC } from 'rxfm';
 import { BehaviorSubject, combineLatest, from, Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
+import { NoteEvent } from './events';
 import { gain } from './gain';
 import { oscillator } from './oscillator';
 import { RangeInput } from './RangeInput';
-import { AudioOutput, connectTo, mapToNull, NoteEvent } from './utils';
+import { AudioOutput, connectTo, mapToNull } from './utils';
 
 interface SynthesizerProps {
   noteEvents: Observable<NoteEvent>;
@@ -56,6 +57,6 @@ const synthesizerStyles = css`
 export const Synthesizer: FC<SynthesizerProps> = ({ noteEvents, output }) => {
   return <div>
     <SynthesizerVoice noteEvents={noteEvents} output={output} />
-    <SynthesizerVoice noteEvents={noteEvents} output={output} />
+    {/* <SynthesizerVoice noteEvents={noteEvents} output={output} /> */}
   </div>;
 };

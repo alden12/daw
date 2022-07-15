@@ -1,6 +1,6 @@
 import { coerceToObservable, flatten } from "rxfm";
 import { Observable, defer, OperatorFunction, combineLatest, of } from "rxjs";
-import { tap, finalize, map, pairwise, shareReplay, startWith, distinctUntilChanged, mapTo, filter } from "rxjs/operators";
+import { tap, finalize, map, pairwise, shareReplay, startWith, distinctUntilChanged, mapTo } from "rxjs/operators";
 
 export const midiToFrequency = (midiNote: number) => Math.pow(2, (midiNote - 69) / 12) * 440;
 
@@ -57,31 +57,3 @@ export const octavate = (notes: number[], ...offsets: number[]) =>
 export const mapToNull = (source: Observable<any>) => source.pipe(mapTo(null));
 
 export const NULL = of(null);
-
-// Events:
-
-export interface Event<T extends string> {
-  type: T;
-}
-
-export interface NoteOn extends Event<"noteOn"> {
-  midiNote: number;
-  velocity?: number;
-  startTime?: number;
-}
-
-export interface NoteOff extends Event<"noteOff"> {
-  midiNote: number;
-  stopTime?: number;
-}
-
-export type NoteEvent = NoteOn | NoteOff;
-
-type NoteEventOfType<T extends NoteEvent["type"]> = Extract<NoteEvent, { type: T }>;
-
-export const isOfType = <T extends NoteEvent["type"], E extends NoteEventOfType<T>>(type: T) => filter((event: NoteEvent): event is E => event.type === type);
-
-export const noteEvent = <T extends NoteEvent["type"], E extends NoteEventOfType<T>>(type: T) => (payload: Omit<E, "type">) => ({ type, ...payload } as E);
-
-export const noteOn = noteEvent("noteOn");
-export const noteOff = noteEvent("noteOff");

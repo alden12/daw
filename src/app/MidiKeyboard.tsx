@@ -2,7 +2,8 @@ import { css } from "@emotion/css";
 import RxFM, { mapToComponents } from "rxfm";
 import { Observable, Subject } from "rxjs";
 import { map } from "rxjs/operators";
-import { midiToNote, NoteEvent } from "./utils";
+import { NoteEvent } from "./events";
+import { midiToNote } from "./utils";
 
 const pressedNoteSet = new Set<number>();
 
