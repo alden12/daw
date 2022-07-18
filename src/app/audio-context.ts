@@ -7,6 +7,6 @@ export const audioContext = audioContextSubject.pipe(
   filter(Boolean),
 );
 
-export const now = audioContext.pipe(
+export const getTimeNow = audioContext.pipe(
   map(audioContext => () => audioContext.currentTime),
 );

@@ -4,29 +4,50 @@ export interface Event<T extends string> {
   type: T;
 }
 
-// TODO: Use quarter notes instead of absolute time to allow tempo changes?
-
-export interface ScheduledEvent {
-  time?: number;
+export interface Scheduled {
+  /**
+   * The number of ticks at which an event should occur since the beginning of the track.
+   */
+  ticks?: number;
 }
 
-export interface MidiNoteEvent {
+export interface MidiNote {
   midiNote: number;
 }
 
-export interface NoteOn extends ScheduledEvent, MidiNoteEvent, Event<"noteOn"> {
+export interface NoteOn extends Scheduled, MidiNote, Event<"noteOn"> {
   velocity?: number;
 }
 
-export interface NoteOff extends ScheduledEvent, MidiNoteEvent, Event<"noteOff"> {}
+export interface NoteOff extends Scheduled, MidiNote, Event<"noteOff"> {}
 
 export type NoteEvent = NoteOn | NoteOff;
 
-type NoteEventOfType<T extends NoteEvent["type"]> = Extract<NoteEvent, { type: T }>;
+// export interface UpdateNote extends Scheduled, MidiNote, Event<"updateNote"> {
+//   newTicks: number;
+// }
 
-export const isOfType = <T extends NoteEvent["type"], E extends NoteEventOfType<T>>(type: T) => filter((event: NoteEvent): event is E => event.type === type);
+// export interface DeleteNote extends Scheduled, MidiNote, Event<"deleteNote"> {}
 
-export const noteEvent = <T extends NoteEvent["type"], E extends NoteEventOfType<T>>(type: T) => (payload: Omit<E, "type">) => ({ type, ...payload } as E);
+export type MidiEvent = NoteEvent;
+
+type EventOfType<T extends MidiEvent["type"]> = Extract<MidiEvent, { type: T }>;
+
+export type ScheduledEvent = Extract<MidiEvent, { ticks?: number }>;
+
+export const isOfType = <T extends MidiEvent["type"], E extends EventOfType<T>>(
+  event: MidiEvent,
+  ...types: T[]
+): event is E => (types as MidiEvent["type"][]).includes(event.type);
+
+export const filterEvents = <T extends MidiEvent["type"], E extends EventOfType<T>>(...types: T[]) =>
+  filter((event: MidiEvent): event is E => (types as MidiEvent["type"][]).includes(event.type));
+
+export const noteEvent = <T extends MidiEvent["type"], E extends EventOfType<T>>(type: T) =>
+  (payload: Omit<E, "type">) => ({ type, ...payload } as E);
 
 export const noteOn = noteEvent("noteOn");
 export const noteOff = noteEvent("noteOff");
+
+// export const updateNote = noteEvent("updateNote");
+// export const deleteNote = noteEvent("deleteNote");

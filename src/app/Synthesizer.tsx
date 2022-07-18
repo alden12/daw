@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import RxFM, { equals, FC } from 'rxfm';
 import { BehaviorSubject, combineLatest, from, Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { NoteEvent } from './events';
+import { isOfType, MidiEvent } from './events';
 import { gain } from './gain';
 import { oscillator } from './oscillator';
 import { RangeInput } from './RangeInput';
 import { AudioOutput, connectTo, mapToNull } from './utils';
 
 interface SynthesizerProps {
-  noteEvents: Observable<NoteEvent>;
+  midiEvents: Observable<MidiEvent>;
   output: Observable<AudioOutput>;
 }
 
@@ -17,19 +17,19 @@ const oscillatorTypeOptions: OscillatorType[] = ["sawtooth", "sine", "square", "
 
 const octavationOptions = [-2, -1, 0, 1, 2];
 
-export const SynthesizerVoice: FC<SynthesizerProps> = ({ noteEvents, output }) => {
+export const SynthesizerVoice: FC<SynthesizerProps> = ({ midiEvents, output }) => {
   const gainAmount = new BehaviorSubject<number>(0.15);
   const oscillatorType = new BehaviorSubject<OscillatorType>("triangle");
   const octavation = new BehaviorSubject<number>(0);
 
-  const octavatedNoteEvents = combineLatest([noteEvents, octavation]).pipe(
-    mergeMap(([noteEvent, octave]) => octave ?
-      from([noteEvent, { ...noteEvent, midiNote: noteEvent.midiNote + octave * 12 }]) :
-      of(noteEvent),
+  const octavatedEvents = combineLatest([midiEvents, octavation]).pipe(
+    mergeMap(([event, octave]) => isOfType(event, "noteOn", "noteOff") && octave ?
+      from([event, { ...event, midiNote: event.midiNote + octave * 12 }]) :
+      of(event),
     ),
   );
 
-  const synthesizer = octavatedNoteEvents.pipe(
+  const synthesizer = octavatedEvents.pipe(
     oscillator({ type: oscillatorType }),
     gain(gainAmount),
     connectTo(output),
@@ -54,9 +54,9 @@ const synthesizerStyles = css`
   padding-bottom: 16px;
 `;
 
-export const Synthesizer: FC<SynthesizerProps> = ({ noteEvents, output }) => {
+export const Synthesizer: FC<SynthesizerProps> = ({ midiEvents, output }) => {
   return <div>
-    <SynthesizerVoice noteEvents={noteEvents} output={output} />
+    <SynthesizerVoice midiEvents={midiEvents} output={output} />
     {/* <SynthesizerVoice noteEvents={noteEvents} output={output} /> */}
   </div>;
 };

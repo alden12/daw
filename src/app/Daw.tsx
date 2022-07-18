@@ -3,9 +3,9 @@ import { css } from '@emotion/css';
 import { MidiKeyboard, midiKeyboardHandlers, midiKeyboardNoteEvents } from './MidiKeyboard';
 import { Synthesizer } from './Synthesizer';
 import { audioContext, audioContextSubject } from './audio-context';
-import { from, merge } from 'rxjs';
+import { merge, of } from 'rxjs';
 import { noteOff, noteOn } from './events';
-import { scheduleNotes } from './noteScheduler';
+import { quarterNotesToTicks, scheduleNotes } from './noteScheduler';
 
 /**
  * TODO
@@ -31,11 +31,18 @@ const dawStyles = css`
 `;
 
 const testNotes = [
-  noteOn({ midiNote: 62, time: 3 }),
-  noteOff({ midiNote: 62, time: 4 }),
+  noteOn({ midiNote: 62, ticks: quarterNotesToTicks(0) }),
+  noteOff({ midiNote: 62, ticks: quarterNotesToTicks(0) + 1 }),
+  noteOn({ midiNote: 62, ticks: quarterNotesToTicks(1) }),
+  noteOff({ midiNote: 62, ticks: quarterNotesToTicks(1) + 1 }),
+  noteOn({ midiNote: 62, ticks: quarterNotesToTicks(2) }),
+  noteOff({ midiNote: 62, ticks: quarterNotesToTicks(2) + 1 }),
+  noteOn({ midiNote: 62, ticks: quarterNotesToTicks(3) }),
+  noteOff({ midiNote: 62, ticks: quarterNotesToTicks(3) + 1 }),
+  // endOfTrack({ ticks: quarterNotesToTicks(4) }),
 ];
 
-const noteSequence = from(testNotes).pipe(
+const noteSequence = of(testNotes).pipe(
   scheduleNotes(),
   log(),
 );
@@ -57,7 +64,7 @@ export const Daw = () => {
     <button onClick={conditional(audioContextSubject, destroy, init)}>
       {conditional(audioContextSubject, "Stop", "Start")}
     </button>
-    {conditional(audioContextSubject, <Synthesizer noteEvents={noteEvents} output={audioContext} />)}
+    {conditional(audioContextSubject, <Synthesizer midiEvents={noteEvents} output={audioContext} />)}
     <MidiKeyboard />
   </div>;
 };

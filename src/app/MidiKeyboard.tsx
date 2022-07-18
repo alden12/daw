@@ -2,12 +2,12 @@ import { css } from "@emotion/css";
 import RxFM, { mapToComponents } from "rxfm";
 import { Observable, Subject } from "rxjs";
 import { map } from "rxjs/operators";
-import { NoteEvent } from "./events";
+import { MidiEvent } from "./events";
 import { midiToNote } from "./utils";
 
 const pressedNoteSet = new Set<number>();
 
-const noteEventsSubject = new Subject<NoteEvent>();
+const noteEventsSubject = new Subject<MidiEvent>();
 export const midiKeyboardNoteEvents = noteEventsSubject.asObservable();
 
 const DEFAULT_VELOCITY = 1;
