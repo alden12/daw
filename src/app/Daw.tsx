@@ -37,13 +37,16 @@ const testNotes = [
   noteOff({ midiNote: 62, ticks: quarterNotesToTicks(1) + 1 }),
   noteOn({ midiNote: 62, ticks: quarterNotesToTicks(2) }),
   noteOff({ midiNote: 62, ticks: quarterNotesToTicks(2) + 1 }),
-  noteOn({ midiNote: 62, ticks: quarterNotesToTicks(3) }),
-  noteOff({ midiNote: 62, ticks: quarterNotesToTicks(3) + 1 }),
+  noteOn({ midiNote: 74, ticks: quarterNotesToTicks(3) }),
+  noteOff({ midiNote: 74, ticks: quarterNotesToTicks(3) + 1 }),
   // endOfTrack({ ticks: quarterNotesToTicks(4) }),
 ];
 
 const noteSequence = of(testNotes).pipe(
-  scheduleNotes(),
+  scheduleNotes({
+    clipEndTicks: of(quarterNotesToTicks(4)),
+    loop: of(true),
+  }),
   log(),
 );
 
