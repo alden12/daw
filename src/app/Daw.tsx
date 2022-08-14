@@ -6,6 +6,7 @@ import { audioContext, audioContextSubject } from './audio-context';
 import { merge, of } from 'rxjs';
 import { noteOff, noteOn } from './events';
 import { quarterNotesToTicks, scheduleNotes } from './noteScheduler';
+import { playing, togglePlaying } from './time';
 
 /**
  * TODO
@@ -50,7 +51,28 @@ const noteSequence = of(testNotes).pipe(
   log(),
 );
 
-const noteEvents = merge(noteSequence, midiKeyboardNoteEvents);
+const noteEvents = merge(midiKeyboardNoteEvents, noteSequence);
+
+// const recordingSubject = new BehaviorSubject(false);
+
+// const timedEvents = recordingSubject.pipe(
+//   switchMap(recording => {
+//     if (!recording) return of(null);
+//     return combineLatest([midiKeyboardNoteEvents, audioContext, tempo]).pipe(
+//       map(([event, audioContext, tempo]) => ({ ...event, ticks: secondsToTicks(tempo, audioContext.currentTime) })),
+//       takeUntil(recordingSubject.pipe(filter(recording => !recording))),
+//       reduce((events, event) => {
+//         events.push(event);
+//         return events;
+//       }, [] as NoteEvent[]),
+//       log(),
+//     );
+//   }),
+// );
+
+// // const time
+
+// timedEvents.subscribe(console.log);
 
 export const Daw = () => {
   const init = () => {
@@ -67,7 +89,12 @@ export const Daw = () => {
     <button onClick={conditional(audioContextSubject, destroy, init)}>
       {conditional(audioContextSubject, "Stop", "Start")}
     </button>
-    {conditional(audioContextSubject, <Synthesizer midiEvents={noteEvents} output={audioContext} />)}
+    {conditional(audioContextSubject, <div>
+      <Synthesizer midiEvents={noteEvents} output={audioContext} />
+      <button onClick={togglePlaying}>
+        {conditional(playing, "Pause", "Play")}
+      </button>
+    </div>)}
     <MidiKeyboard />
   </div>;
 };

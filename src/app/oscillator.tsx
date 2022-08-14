@@ -1,6 +1,6 @@
 import { combineLatest, Observable, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, mergeMap, share, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
-import { getTimeNow } from './audio-context';
+import { getAudioContextTime } from './audio-context';
 import { gainNode, oscillatorNode } from './audio-nodes';
 import { DEFAULT_ENVELOPE, Envelope, envelopeOff, envelopeOn } from './envelope';
 import { MidiEvent, filterEvents } from './events';
@@ -33,7 +33,7 @@ export const oscillator = (
       const startTime = ticksToSeconds(startTempo, ticks);
       return combineLatest([oscillatorNode(), gainNode()]).pipe(
         tap(chainNodes),
-        switchMap(nodes => combineLatest({ type, envelope, now: getTimeNow }).pipe(
+        switchMap(nodes => combineLatest({ type, envelope, now: getAudioContextTime }).pipe(
           map(({ type, envelope, now }) => {
             const [oscillatorNode, gainNode] = nodes;
             // TODO: Split these into switchTap operators?
@@ -47,7 +47,7 @@ export const oscillator = (
           takeUntil(sharedEvents.pipe(
             filterEvents("noteOff"),
             filter(noteOff => midiNote === noteOff.midiNote),
-            withLatestFrom(envelope, getTimeNow, tempo),
+            withLatestFrom(envelope, getAudioContextTime, tempo),
             tap(([{ ticks }, envelope, now, endTempo]) => {
               const stopTime = ticksToSeconds(endTempo, ticks);
               const [oscillatorNode, gainNode] = nodes;
